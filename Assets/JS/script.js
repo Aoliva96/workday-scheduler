@@ -1,19 +1,29 @@
 $(document).ready(function () {
-  // Var declare
   const today = dayjs();
   const todayFormat = today.format("dddd, MMMM D");
 
   // Append current date to HTML
   $("p").children("span").text(todayFormat);
 
-  // TODO: Add a listener for click events on the save button. This code should
-  // use the id in the containing time-block as a key to save the user input in
-  // local storage. HINT: What does `this` reference in the click listener
-  // function? How can DOM traversal be used to get the "hour-x" id of the
-  // time-block containing the button that was clicked? How might the id be
-  // useful when saving the description in local storage?
+  // Save button event listener
+  function clickHandler(event) {
+    let timeBlock = event.target.closest(".time-block");
 
-  // Save button click listener
+    if (timeBlock) {
+      let hourId = timeBlock.id;
+      console.log(`${hourId} schedule saved`);
+
+      // Save user input to local storage
+      let text = timeBlock.querySelector("textarea").value;
+      console.log(text);
+
+      localStorage.setItem(`${hourId}-schedule`, text);
+    }
+  }
+
+  document.querySelectorAll(".btn").forEach((button) => {
+    button.addEventListener("click", clickHandler);
+  });
 
   // TODO: Add code to apply the past, present, or future class to each time
   // block by comparing the id to the current hour. HINTS: How can the id
