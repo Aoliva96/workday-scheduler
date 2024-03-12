@@ -16,7 +16,7 @@ $(document).ready(function () {
       // Save user input to local storage
       let text = timeBlock.querySelector("textarea").value;
       localStorage.setItem(`${hourId}-schedule`, text);
-      console.log(`${hourId}-schedule updated in localstorage`);
+      console.log(`${hourId}-schedule updated in localStorage`);
     }
   }
 
@@ -24,7 +24,39 @@ $(document).ready(function () {
     button.addEventListener("click", clickHandler);
   });
 
-  // Apply past / present / future classes to each time-block
+  // Function to compare time blocks to current time
+  function checkTime(hoursEl) {
+    let hoursElId = hoursEl.attr("id");
+    let hoursStrings = hoursElId.split("-");
+    let timeTest = hoursStrings[1];
+
+    // Create 24hr time stamp to pass into dayjs
+    function currentTimeStamp() {
+      // const currentHour = dayjs().hour();
+      const currentMinute = dayjs().minute();
+      const currentSecond = dayjs().second();
+
+      let timeStamp = `${timeTest}:${currentMinute}:${currentSecond}`;
+      return timeStamp;
+    }
+
+    // Convert 24hr time to 12hr time
+    const timeConvertAM = (military) =>
+      military ? dayjs(`1/1/1 ${military}`).format("h:mm A") : null;
+
+    console.log(timeConvertAM(currentTimeStamp()));
+
+    // Check if time blocks are past, present, or future
+    if (now.isBefore(dayjs().hour(timeTest).valueOf(), "hour")) {
+      hoursEl.addClass("future");
+    } else if (now.isSame(dayjs().hour(timeTest).valueOf(), "hour")) {
+      hoursEl.addClass("present");
+    } else if (now.isAfter(dayjs().hour(timeTest).valueOf(), "hour")) {
+      hoursEl.addClass("past");
+    }
+  }
+
+  // Loop to call checkTime for each time block
   const hours = $(".time-block");
 
   for (let i = 0; i < hours.length; i++) {
@@ -33,21 +65,24 @@ $(document).ready(function () {
     checkTime(hoursEl);
   }
 
-  function checkTime(hoursEl) {
-    let hoursElId = hoursEl.attr("id");
-    let hoursStrings = hoursElId.split("-");
-    let timeTest = hoursStrings[1];
+  // Populate time blocks with user input saved in localStorage
+  const textAreas = document.querySelectorAll("textarea");
 
-    if (now.isBefore(dayjs().hour(timeTest).valueOf(), "hour")) {
-      hoursEl.addClass("future");
-    } else if (now.isSame(dayjs().hour(timeTest).valueOf(), "hour")) {
-      hoursEl.addClass("present");
-    } else if (now.isAfter(dayjs().hour(timeTest).valueOf(), "hour")) {
-      hoursEl.addClass("future");
-    }
+  function loadStorage() {
+    textAreas.forEach((textarea) => {
+      const parentId = textarea.parentNode.id;
+      const scheduleData = localStorage.getItem(`${parentId}-schedule`);
+
+      if (scheduleData) {
+        textarea.value = scheduleData;
+      } else {
+        textarea.setAttribute(
+          "placeholder",
+          "Enter your schedule details here"
+        );
+      }
+    });
   }
 
-  // TODO: Add code to get any user input that was saved in localStorage and set
-  // the values of the corresponding textarea elements. HINT: How can the id
-  // attribute of each time-block be used to do this?
+  loadStorage();
 });
