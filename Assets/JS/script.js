@@ -1,89 +1,70 @@
-$(document).ready(function () {
+$(function () {
   const now = dayjs();
 
   // Append current date to HTML
-  $("#currentDay").children("span").text(now.format("dddd, MMMM D"));
+  $("#currentDay span").text(now.format("dddd, MMMM D"));
 
   // Clone time blocks from template (9AM to 5PM)
   for (let i = 10; i <= 17; i++) {
-    const container = document.getElementById("scheduleContainer");
-    const template = document.getElementById("hour-09");
-    const clone = template.cloneNode(true);
+    const clone = $("#hour-09").clone(true);
 
     // Update cloned time block ids
-    clone.id = `hour-${i.toString().padStart(2, "0")}`;
+    clone.attr("id", `hour-${i.toString().padStart(2, "0")}`);
 
     // Update cloned time block labels
     if (i < 12) {
-      clone.querySelector(".hour").textContent = `${i}AM`;
+      $(".hour", clone).text(`${i}AM`);
     } else if (i === 12) {
-      clone.querySelector(".hour").textContent = `${i}PM`;
+      $(".hour", clone).text(`${i}PM`);
     } else {
       const iFormat = i - 12;
-      clone.querySelector(".hour").textContent = `${iFormat}PM`;
+      $(".hour", clone).text(`${iFormat}PM`);
     }
 
-    container.appendChild(clone);
+    $("#scheduleContainer").append(clone);
   }
 
-  // Save button click handler
-  function clickHandler(event) {
-    let timeBlock = event.target.closest(".time-block");
+  // Save button click event handler
+  $(document).on("click", ".btn", function (event) {
+    let timeBlock = $(event.target).closest(".time-block");
 
+    // Save user input to local storage
     if (timeBlock) {
-      let hourId = timeBlock.id;
+      let hourId = timeBlock.attr("id");
+      let input = timeBlock.find("textarea").val();
 
-      // Save user input to local storage
-      let input = timeBlock.querySelector("textarea").value;
       localStorage.setItem(`${hourId}-schedule`, input);
       console.log(`${hourId}-schedule saved to localStorage`);
     }
-  }
-
-  // Save button event listener
-  document.querySelectorAll(".btn").forEach((button) => {
-    button.addEventListener("click", clickHandler);
   });
 
-  // Function to compare time blocks to current time
+  // Compare time blocks to current time
   function checkTime(hoursEl) {
     const hoursStr = hoursEl.attr("id").split("-")[1];
+    const targetTime = dayjs().hour(hoursStr);
 
-    if (now.isBefore(dayjs().hour(hoursStr).valueOf(), "hour")) {
+    if (now.isBefore(targetTime, "hour")) {
       hoursEl.addClass("future");
-    } else if (now.isSame(dayjs().hour(hoursStr).valueOf(), "hour")) {
+    } else if (now.isSame(targetTime, "hour")) {
       hoursEl.addClass("present");
-    } else if (now.isAfter(dayjs().hour(hoursStr).valueOf(), "hour")) {
+    } else {
       hoursEl.addClass("past");
     }
   }
 
-  const hours = $(".time-block");
-
-  for (let i = 0; i < hours.length; i++) {
-    let hoursEl = hours.eq(i);
-
+  $(".time-block").each(function () {
+    let hoursEl = $(this);
     checkTime(hoursEl);
-  }
+  });
 
-  // Populate time blocks with user input saved in localStorage
-  function loadStorage() {
-    const textAreas = document.querySelectorAll("textarea");
-
-    textAreas.forEach((textarea) => {
-      const parentId = textarea.parentNode.id;
-      const inputData = localStorage.getItem(`${parentId}-schedule`);
-
-      if (inputData) {
-        textarea.value = inputData;
-      } else {
-        textarea.setAttribute(
-          "placeholder",
-          "Enter your schedule details here"
-        );
-      }
-    });
-  }
-
-  loadStorage();
+  // Populate time blocks with user input saved in local storage
+  $("textarea").each(function () {
+    const parentId = $(this).parent().attr("id");
+    const inputData = localStorage.getItem(`${parentId}-schedule`);
+    if (inputData) {
+      $(this).val(inputData);
+    } else {
+      $(this).attr("placeholder", "Enter your schedule details here");
+    }
+  });
 });
